@@ -1,0 +1,32 @@
+# Raw and processed datasets (keep .gitkeep files)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables and secrets
+.env
+
+# Power BI reports
+*.pbix
+
+# Python bytecode and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# OS metadata
+.DS_Store
+Thumbs.db
