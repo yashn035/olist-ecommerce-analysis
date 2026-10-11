@@ -365,3 +365,52 @@ WHERE o.order_status = 'delivered'
 GROUP BY s.seller_id, s.seller_state, s.seller_city
 HAVING COUNT(*) >= 50
 ORDER BY seller_late_rate_pct DESC, total_orders DESC;
+
+
+-- -----------------------------------------------------------------------------
+-- QUERY 11: Causal Matched-Pair Analysis - Late vs On-Time Deliveries
+-- Business Question: When controlling for geographic state, exact product ID,
+-- and order price (+/- 10%), what is the true review score penalty of late delivery?
+-- Target CSV: data/processed/late_delivery_matched.csv
+-- -----------------------------------------------------------------------------
+WITH late_orders AS (
+    SELECT o.order_id, c.customer_state, oi.product_id,
+           (oi.price + oi.freight_value) AS order_value,
+           r.review_score
+    FROM orders o
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN customers c ON o.customer_id = c.customer_id
+    JOIN reviews r ON o.order_id = r.order_id
+    WHERE o.order_status = 'delivered'
+      AND o.order_delivered_customer_date > o.order_estimated_delivery_date
+      AND o.order_delivered_customer_date IS NOT NULL
+      AND o.order_purchase_timestamp >= '2017-01-01'
+      AND o.order_purchase_timestamp < '2018-09-01'
+),
+ontime_orders AS (
+    SELECT o.order_id, c.customer_state, oi.product_id,
+           (oi.price + oi.freight_value) AS order_value,
+           r.review_score
+    FROM orders o
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN customers c ON o.customer_id = c.customer_id
+    JOIN reviews r ON o.order_id = r.order_id
+    WHERE o.order_status = 'delivered'
+      AND o.order_delivered_customer_date <= o.order_estimated_delivery_date
+      AND o.order_delivered_customer_date IS NOT NULL
+      AND o.order_purchase_timestamp >= '2017-01-01'
+      AND o.order_purchase_timestamp < '2018-09-01'
+)
+SELECT
+    l.order_id AS late_order_id,
+    o.order_id AS matched_ontime_order_id,
+    l.customer_state,
+    l.order_value AS late_value,
+    o.order_value AS ontime_value,
+    l.review_score AS late_score,
+    o.review_score AS ontime_score
+FROM late_orders l
+JOIN ontime_orders o
+    ON l.customer_state = o.customer_state
+    AND l.product_id = o.product_id
+    AND ABS(l.order_value - o.order_value) < 0.1 * l.order_value;

@@ -1,7 +1,7 @@
 """
-Run Analysis Queries and Export 10 CSVs
+Run Analysis Queries and Export 11 CSVs
 ---------------------------------------
-Executes all 10 queries from sql/analysis.sql on data/olist.db
+Executes all 11 queries from sql/analysis.sql on data/olist.db
 and exports results to data/processed/.
 """
 
@@ -306,9 +306,70 @@ ORDER BY seller_late_rate_pct DESC, total_orders DESC;
 """
 }
 
+def export_matched_pairs():
+    cur = conn.cursor()
+    cur.execute("DROP TABLE IF EXISTS temp_late;")
+    cur.execute("DROP TABLE IF EXISTS temp_ontime;")
+    cur.execute("""
+    CREATE TEMP TABLE temp_late AS
+    SELECT o.order_id, c.customer_state, oi.product_id,
+           (oi.price + oi.freight_value) AS order_value,
+           r.review_score
+    FROM orders o
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN customers c ON o.customer_id = c.customer_id
+    JOIN reviews r ON o.order_id = r.order_id
+    WHERE o.order_status = 'delivered'
+      AND o.order_delivered_customer_date > o.order_estimated_delivery_date
+      AND o.order_delivered_customer_date IS NOT NULL
+      AND o.order_purchase_timestamp >= '2017-01-01'
+      AND o.order_purchase_timestamp < '2018-09-01';
+    """)
+    cur.execute("""
+    CREATE TEMP TABLE temp_ontime AS
+    SELECT o.order_id, c.customer_state, oi.product_id,
+           (oi.price + oi.freight_value) AS order_value,
+           r.review_score
+    FROM orders o
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN customers c ON o.customer_id = c.customer_id
+    JOIN reviews r ON o.order_id = r.order_id
+    WHERE o.order_status = 'delivered'
+      AND o.order_delivered_customer_date <= o.order_estimated_delivery_date
+      AND o.order_delivered_customer_date IS NOT NULL
+      AND o.order_purchase_timestamp >= '2017-01-01'
+      AND o.order_purchase_timestamp < '2018-09-01';
+    """)
+    cur.execute("CREATE INDEX idx_tl ON temp_late(product_id, customer_state);")
+    cur.execute("CREATE INDEX idx_to ON temp_ontime(product_id, customer_state);")
+
+    q_match = """
+    SELECT
+        l.order_id AS late_order_id,
+        o.order_id AS matched_ontime_order_id,
+        l.customer_state,
+        l.order_value AS late_value,
+        o.order_value AS ontime_value,
+        l.review_score AS late_score,
+        o.review_score AS ontime_score
+    FROM temp_late l
+    JOIN temp_ontime o
+        ON l.customer_state = o.customer_state
+        AND l.product_id = o.product_id
+        AND ABS(l.order_value - o.order_value) < 0.1 * l.order_value;
+    """
+    df_match = pd.read_sql(q_match, conn)
+    out_path = OUTPUT_DIR / "late_delivery_matched.csv"
+    df_match.to_csv(out_path, index=False)
+    print(f"\n[SAVED] late_delivery_matched.csv")
+    print(f"Row count: {len(df_match):,}")
+    print(f"Columns:   {list(df_match.columns)}")
+    print("First 3 rows:")
+    print(df_match.head(3).to_string(index=False))
+
 def main():
     print("=" * 80)
-    print("EXECUTING 10 ANALYSIS QUERIES AND EXPORTING CSVs")
+    print("EXECUTING 11 ANALYSIS QUERIES AND EXPORTING CSVs")
     print("=" * 80)
 
     for filename, sql in QUERIES.items():
@@ -321,6 +382,8 @@ def main():
         print(f"Columns:   {list(df.columns)}")
         print("First 3 rows:")
         print(df.head(3).to_string(index=False))
+
+    export_matched_pairs()
 
     # Sanity checks
     print("\n" + "=" * 80)
