@@ -39,4 +39,4 @@ Between January 2017 and August 2018, gross marketplace sales expanded five-fold
 
 * **Customer Acquisition Cost (CAC):** The dataset does not track paid advertising spend, channel attribution, or conversion funnels; we cannot calculate true customer acquisition efficiency or Lifetime Value to CAC (LTV:CAC) ratios.
 * **Pre-Fulfillment Intent & Cart Drop-Off:** Records only exist for orders that were placed and completed; we cannot observe shoppers who abandoned carts due to 50–60% freight friction in remote states.
-* **Causal Attribution:** While matched-pair analysis confirms delay creates an independent rating penalty, true mathematical causality requires controlled A/B testing with randomized shipping subsidies.
+* **Causal Attribution:** We conducted a matched-pair analysis controlling for state, product, and order value (n=3,309 pairs). The review-score penalty persists at −1.59 stars (vs −1.72 unadjusted), suggesting the effect is not explained by geography, product type, or basket size alone. Randomization would still be required to establish causation — seller quality and seasonal factors remain unmeasured confounds.

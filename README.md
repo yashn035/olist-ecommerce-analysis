@@ -58,7 +58,7 @@ Below are the four core visual deliverables from the analysis. Full 9-chart gall
 
 ## 5. Analytical Limitations
 
-1. **Correlational, not causal:** While late delivery correlates with a -1.72 rating drop, confounds exist (distance, carrier handling, seller defect rates). We conducted a matched-pair analysis controlling for state, category, and order value ($n=3,309$ pairs). The late-delivery penalty persisted at **-1.59 stars**, proving the effect is not explained by geography or item price alone—though true causality requires randomized shipping pilots.
+1. **Correlational, not causal:** While late delivery correlates with a -1.72 rating drop, confounds exist (distance, carrier handling, seller defect rates). We conducted a matched-pair analysis controlling for state, product, and order value (n=3,309 pairs). The review-score penalty persists at −1.59 stars (vs −1.72 unadjusted), suggesting the effect is not explained by geography, product type, or basket size alone. Randomization would still be required to establish causation — seller quality and seasonal factors remain unmeasured confounds.
 2. **No marketing acquisition spend data:** The dataset lacks CAC and channel attribution, precluding computation of true LTV:CAC ratios.
 3. **Survivorship bias in reviews:** Over 99% of reviews correspond to delivered orders; feedback from canceled or unavailable pre-fulfillment orders is unrecorded.
 4. **Historical boundary:** Data terminates in August 2018; conclusions reflect 2017–2018 marketplace dynamics.
